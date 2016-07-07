@@ -1,0 +1,102 @@
+# Assignment 1
+
+## Load data
+
+
+```r
+data <- read.csv("activity.csv", header = TRUE)
+daily_steps <- aggregate(steps ~ date, data = data, sum)
+```
+
+## What is the mean total number of steps taken per day?
+
+### Sum number of steps, create histogram and report median and mean.
+
+
+```r
+hist(daily_steps$steps, main = paste("Total Number of Steps per Day"), col = "gray", xlab = "Number of steps")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+
+```r
+daily_steps_mean <- mean(daily_steps$steps)
+daily_steps_median <- median(daily_steps$steps)
+```
+
+The mean is 1.0766189\times 10^{4}.
+The median is 10765.
+
+# What is the average daily activity pattern?
+
+## Time series plot and find interval with most average steps
+
+
+```r
+interval_steps <- aggregate(steps ~ interval, data = data, mean)
+plot(interval_steps$interval, interval_steps$steps, type = "l", xlab = "5-minute interval", ylab = "Average steps taken", main = paste("Average Daily Activity Pattern"))
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
+max_interval <- interval_steps[which.max(interval_steps$steps),1]
+```
+
+The mean is 835.
+
+# Imputing Missing Values
+
+## Calculating missing values
+
+
+```r
+missing <- sum(!complete.cases(data))
+
+# Loop thru all the rows of activity, find the one with NA for steps.
+# For each identify the interval for that row
+# Then identify the avg steps for that interval in avg_steps_per_interval
+# Substitute the NA value with that value
+
+for (i in 1:nrow(data)) {
+    if(is.na(data$steps[i])) {
+        val <- interval_steps$steps[which(interval_steps$interval == data$interval[i])]
+        data$steps[i] <- val 
+    }
+}
+
+daily_steps_impute <- aggregate(steps ~ date, data = data , sum)
+```
+## Create histogram
+
+
+```r
+hist(daily_steps_impute$steps, main = "Histogram of total number of steps per day (IMPUTED)", xlab = "Steps per day", col = "gray")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+## Median and total number of steps
+
+```r
+dailystepsimpute_mean <- round(mean(daily_steps_impute$steps))
+dailystepsimpute_median <- median(daily_steps_impute$steps)
+```
+The mean is equal to 1.0766\times 10^{4} and the median is equal to 1.0766189\times 10^{4}. It is important to note that the mean and median have not changed with the imputed numbers.
+
+# Are there diferences in activity patterns between weekdays and weekends?
+
+
+```r
+weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+data$dow = as.factor(ifelse(is.element(weekdays(as.Date(data$date)),weekdays), "Weekday", "Weekend"))
+
+steps_by_interval_i <- aggregate(steps ~ interval + dow, data, mean)
+
+library(lattice)
+
+xyplot(steps_by_interval_i$steps ~ steps_by_interval_i$interval|steps_by_interval_i$dow, main="Average Steps per Day by Interval",xlab="Interval", ylab="Steps",layout=c(1,2), type="l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
